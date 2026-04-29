@@ -2,6 +2,6 @@
   "name": "ai-transparency-site",
   "version": "1.0.0",
   "scripts": {
-    "start": "npx serve . --listen 3000 --no-clipboard"
+    "start": "node server.js"
   }
 }
