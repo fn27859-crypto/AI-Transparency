@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Black Box Problem — AI Transparency & Ethics</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,700;9..144,900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #080d18;
+    --surface: #0f172a;
+    --surface2: #1e293b;
+    --border: #1e2d45;
+    --sky: #38bdf8;
+    --amber: #f59e0b;
+    --rose: #fb7185;
+    --emerald: #34d399;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --faint: #1a2540;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* ── Progress Bar ── */
+  #progress-bar {
+    position: fixed; top: 0; left: 0;
+    height: 3px; width: 0%;
+    background: linear-gradient(90deg, var(--sky), var(--emerald));
+    z-index: 1000;
+    transition: width 0.1s linear;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem;
+    height: 54px;
+    background: rgba(8,13,24,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 999;
+  }
+  nav .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 0.9rem;
+    color: var(--sky);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  nav .chapters {
+    display: flex; gap: 1.5rem;
+    list-style: none;
+  }
+  nav .chapters a {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  nav .chapters a:hover { color: var(--sky); }
+
+  /* ── Sections ── */
+  section { padding: 6rem 1.5rem; max-width: 780px; margin: 0 auto; }
+  section + section { padding-top: 2rem; }
+
+  .chapter-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sky);
+    margin-bottom: 0.75rem;
+    opacity: 0.8;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  h1 { font-size: clamp(2.8rem, 7vw, 5rem); font-weight: 900; color: #fff; }
+  h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); color: #fff; margin-bottom: 1.25rem; }
+  h3 { font-size: 1.2rem; color: var(--sky); margin-bottom: 0.5rem; }
+
+  p { margin-bottom: 1.1rem; color: #a8bcd0; font-size: 1.0rem; }
+  p strong { color: var(--text); font-weight: 500; }
+
+  /* ── Hero ── */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding-top: 54px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes gridPulse {
+    from { opacity: 0.4; }
+    to { opacity: 0.9; }
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .hero-content { position: relative; z-index: 1; }
+
+  .hero-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sky);
+    border: 1px solid rgba(56,189,248,0.3);
+    padding: 0.3rem 0.8rem;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.15rem;
+    color: #7a95b0;
+    max-width: 540px;
+    margin-top: 1.5rem;
+    font-weight: 300;
+  }
+
+  .hero-stat-row {
+    display: flex; gap: 2.5rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+  }
+  .stat-item { }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--sky);
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2.5rem; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  .scroll-hint svg { opacity: 0.5; }
+  @keyframes bounce {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(6px); }
+  }
+
+  /* ── Reveal on scroll ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Divider ── */
+  .divider {
+    width: 40px; height: 2px;
+    background: var(--sky);
+    margin: 1.5rem 0;
+    opacity: 0.5;
+  }
+
+  /* ── Issue Cards ── */
+  .issue-grid {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .issue-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .issue-card:hover { border-color: rgba(56,189,248,0.4); transform: translateY(-2px); }
+
+  .issue-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+  }
+  .issue-title-wrap { display: flex; align-items: center; gap: 1rem; }
+  .issue-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .issue-name {
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .issue-toggle {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.3s, background 0.2s;
+    color: var(--muted);
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .issue-card.open .issue-toggle {
+    transform: rotate(45deg);
+    background: rgba(56,189,248,0.1);
+    color: var(--sky);
+    border-color: var(--sky);
+  }
+  .issue-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+    padding: 0 1.5rem;
+  }
+  .issue-card.open .issue-body {
+    max-height: 400px;
+    padding: 0 1.5rem 1.25rem;
+  }
+  .issue-body p { font-size: 0.92rem; margin-bottom: 0.7rem; }
+  .issue-body .source-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: var(--sky);
+    border: 1px solid rgba(56,189,248,0.25);
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-top: 0.3rem;
+  }
+
+  /* ── Affected Groups ── */
+  .affected-split {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+  @media (max-width: 600px) { .affected-split { grid-template-columns: 1fr; } }
+
+  .affected-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+  .affected-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  .direct { background: rgba(251,113,133,0.1); color: var(--rose); border: 1px solid rgba(251,113,133,0.2); }
+  .indirect { background: rgba(245,158,11,0.1); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+  .affected-card p { font-size: 0.9rem; }
+
+  /* ── XAI Pillars ── */
+  .xai-pillars {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  @media (max-width: 600px) { .xai-pillars { grid-template-columns: 1fr; } }
+
+  .pillar {
+    background: var(--faint);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .pillar::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .pillar:nth-child(1)::before { background: var(--sky); }
+  .pillar:nth-child(2)::before { background: var(--emerald); }
+  .pillar:nth-child(3)::before { background: var(--amber); }
+
+  .pillar-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+  .pillar-name { font-family: 'Fraunces', serif; font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .pillar p { font-size: 0.85rem; }
+
+  /* ── NIST List ── */
+  .nist-list {
+    margin-top: 1.5rem;
+    counter-reset: nist;
+    list-style: none;
+    display: grid; gap: 0.75rem;
+  }
+  .nist-list li {
+    counter-increment: nist;
+    display: flex; gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.92rem;
+  }
+  .nist-list li::before {
+    content: counter(nist);
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    color: var(--sky);
+    opacity: 0.4;
+    line-height: 1;
+    flex-shrink: 0;
+    min-width: 1.5rem;
+  }
+
+  /* ── Solution Box ── */
+  .solution-box {
+    background: linear-gradient(135deg, rgba(56,189,248,0.07) 0%, rgba(52,211,153,0.05) 100%);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .solution-box::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(180deg, var(--sky), var(--emerald));
+  }
+  .solution-box h3 { color: var(--emerald); }
+
+  /* ── Impact Tags ── */
+  .impact-row {
+    display: flex; flex-wrap: wrap; gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  .impact-tag {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .pos { background: rgba(52,211,153,0.1); color: var(--emerald); border: 1px solid rgba(52,211,153,0.25); }
+  .neu { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
+  .neg { background: rgba(251,113,133,0.1); color: var(--rose); border: 1px solid rgba(251,113,133,0.2); }
+
+  /* ── Quiz ── */
+  .quiz-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+  .quiz-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 1rem;
+  }
+  .quiz-wrapper h3 { color: #fff; font-size: 1.1rem; margin-bottom: 1.5rem; }
+
+  .q-block { margin-bottom: 2rem; }
+  .q-text { font-size: 0.95rem; color: var(--text); margin-bottom: 0.75rem; font-weight: 500; }
+  .q-options { display: grid; gap: 0.5rem; }
+  .q-opt {
+    display: block;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: #94a3b8;
+    background: var(--faint);
+    transition: all 0.2s;
+    text-align: left;
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .q-opt:hover:not(:disabled) { border-color: rgba(56,189,248,0.4); color: var(--text); }
+  .q-opt.correct { background: rgba(52,211,153,0.12); border-color: var(--emerald); color: var(--emerald); }
+  .q-opt.wrong { background: rgba(251,113,133,0.1); border-color: var(--rose); color: var(--rose); }
+  .q-opt:disabled { cursor: default; }
+  .q-feedback { font-size: 0.8rem; margin-top: 0.5rem; padding: 0.4rem 0.7rem; border-radius: 4px; display: none; }
+  .q-feedback.show { display: block; }
+  .q-feedback.good { background: rgba(52,211,153,0.08); color: var(--emerald); }
+  .q-feedback.bad { background: rgba(251,113,133,0.08); color: var(--rose); }
+
+  .quiz-submit {
+    margin-top: 0.5rem;
+    padding: 0.7rem 2rem;
+    background: var(--sky);
+    color: #080d18;
+    border: none;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: none;
+  }
+  .quiz-submit:hover { background: #7dd3fc; }
+  .quiz-submit:active { transform: scale(0.97); }
+  .quiz-submit.visible { display: block; }
+
+  .quiz-score {
+    text-align: center;
+    padding: 1.5rem;
+    display: none;
+  }
+  .quiz-score.show { display: block; }
+  .score-num {
+    font-family: 'Fraunces', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--sky);
+  }
+  .score-msg { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; }
+
+  /* ── References ── */
+  .refs-toggle {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); padding: 0.6rem 1.2rem;
+    border-radius: 6px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; margin-top: 1rem;
+    transition: all 0.2s;
+  }
+  .refs-toggle:hover { border-color: var(--sky); color: var(--sky); }
+  .refs-list {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.4s ease;
+    margin-top: 0.75rem;
+  }
+  .refs-list.open { max-height: 2000px; }
+  .refs-list ol { padding-left: 1.5rem; }
+  .refs-list li { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.5rem; line-height: 1.5; }
+  .refs-list a { color: rgba(56,189,248,0.6); }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 3rem 1rem 4rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  footer p { color: var(--muted); font-size: 0.8rem; }
+
+  /* ── Callout ── */
+  .callout {
+    border-left: 3px solid var(--sky);
+    padding: 1rem 1.5rem;
+    background: rgba(56,189,248,0.04);
+    border-radius: 0 6px 6px 0;
+    margin: 1.5rem 0;
+  }
+  .callout p { font-size: 0.92rem; font-style: italic; color: #94a3b8; margin: 0; }
+  .callout cite { display: block; font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem; font-style: normal; }
+
+  /* ── Timeline ── */
+  .timeline { margin-top: 1.5rem; }
+  .tl-item {
+    display: flex; gap: 1.25rem;
+    padding-bottom: 1.5rem;
+    position: relative;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: 10px; top: 22px;
+    width: 1px; height: calc(100% - 8px);
+    background: var(--border);
+  }
+  .tl-item:last-child::before { display: none; }
+  .tl-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--sky);
+    flex-shrink: 0;
+    margin-top: 2px;
+    position: relative; z-index: 1;
+  }
+  .tl-body h4 { font-size: 0.95rem; color: #fff; font-family: 'Fraunces', serif; margin-bottom: 0.3rem; }
+  .tl-body p { font-size: 0.87rem; }
+
+  /* ── Bias Visual ── */
+  .bias-bar-wrap {
+    margin-top: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+  .bias-bar-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem; }
+  .bias-bar-track { height: 10px; background: var(--faint); border-radius: 5px; margin-bottom: 0.9rem; overflow: hidden; }
+  .bias-bar-fill {
+    height: 100%; border-radius: 5px;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .bias-bar-fill.animated { transform: scaleX(1); }
+  .bias-caption { font-size: 0.78rem; color: var(--muted); font-style: italic; margin-top: 0.5rem; }
+
+  /* ── Challenge chips ── */
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+  .chip {
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+    background: var(--faint);
+  }
+
+  /* ── Scroll Sections ── */
+  #problem { padding-top: 7rem; }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav>
+  <div class="logo">AI Transparency</div>
+  <ul class="chapters">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#issues">Issues</a></li>
+    <li><a href="#affected">Impact</a></li>
+    <li><a href="#xai">XAI</a></li>
+    <li><a href="#solution">Solution</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <span class="hero-tag">Ethics &amp; Technology</span>
+    <h1>The Black<br/>Box Problem</h1>
+    <p class="hero-subtitle">When AI makes life-changing decisions without explanation, who is accountable — and who gets hurt?</p>
+    <div class="hero-stat-row">
+      <div class="stat-item">
+        <div class="stat-num">3+</div>
+        <div class="stat-label">Critical sectors at risk</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">5</div>
+        <div class="stat-label">Sources of AI bias</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">4</div>
+        <div class="stat-label">NIST XAI principles</div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll to explore</span>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8l5 5 5-5" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+</section>
+
+<!-- ══════════════ PROBLEM ══════════════ -->
+<section id="problem">
+  <div class="reveal">
+    <div class="chapter-label">Chapter 01 — The Problem</div>
+    <h2>Opacity in the Age of Algorithmic Decisions</h2>
+    <div class="divider"></div>
+    <p>Artificial intelligence is no longer a futuristic concept — it is actively diagnosing patients, assessing criminal defendants, screening job applicants, and guiding autonomous vehicles. The problem is not that AI is being used. The problem is that <strong>most people — including the professionals relying on it — cannot see inside</strong> how it reaches its conclusions.</p>
+    <p>This is often called the <strong>"black box" problem</strong>: AI systems accept inputs and produce outputs, but their internal logic remains opaque even to their creators. In low-stakes applications this is a minor inconvenience. In high-stakes environments, it becomes an ethical crisis.</p>
+    <div class="callout">
+      <p>"As AI and ML become more widespread and intertwined with human-centric applications, and algorithmic decisions become more consequential to individuals and society, attention has shifted back from accuracy to explainability."</p>
+      <cite>— Angelov et al., 2021 (WIREs Data Mining and Knowledge Discovery)</cite>
+    </div>
+    <p>The push for AI integration in decision-critical roles — without adequate transparency — creates a gap in <strong>accountability, fairness, and public safety</strong>. When an AI makes an incorrect decision, the absence of a clear reasoning trail makes it nearly impossible to identify what went wrong, who is responsible, or how to prevent it from happening again.</p>
+  </div>
+</section>
+
+<!-- ══════════════ ISSUES ══════════════ -->
+<section id="issues">
+  <div class="reveal">
+    <div class="chapter-label">Chapter 02 — Ethical Issues</div>
+    <h2>Three Core Ethical Failures</h2>
+    <div class="divider"></div>
+    <p>Click each card to explore the specific ethical challenges raised by opaque AI systems.</p>
+
+    <div class="issue-grid">
+
+      <!-- Card 1 -->
+      <div class="issue-card" onclick="toggleCard(this)">
+        <div class="issue-header">
+          <div class="issue-title-wrap">
+            <div class="issue-icon" style="background:rgba(56,189,248,0.1);">🏛️</div>
+            <div class="issue-name">Trust &amp; Accountability</div>
+          </div>
+          <div class="issue-toggle">+</div>
+        </div>
+        <div class="issue-body">
+          <p>When AI makes decisions in professional settings — medicine, law, finance — without transparency, the public loses trust in those institutions. More dangerously, there is no clear answer to the question: <strong>who is responsible when the AI is wrong?</strong></p>
+          <p>The Carnegie Council defines AI accountability as ensuring "responsibility for bad outcomes can be assigned to liable parties." Without transparent AI, this assignment becomes nearly impossible — leaving victims without recourse and organizations without incentive to improve.</p>
+          <p>Pazzanese (2024, Harvard Gazette) notes that this lack of accountability can often <em>negatively impact the victim</em>, while the institution deploying the AI may face little to no consequence.</p>
+          <span class="source-tag">Harvard Gazette, 2024</span>
+          <span class="source-tag">Carnegie Council, 2026</span>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="issue-card" onclick="toggleCard(this)">
+        <div class="issue-header">
+          <div class="issue-title-wrap">
+            <div class="issue-icon" style="background:rgba(251,113,133,0.1);">🚨</div>
+            <div class="issue-name">Public Safety</div>
+          </div>
+          <div class="issue-toggle">+</div>
+        </div>
+        <div class="issue-body">
+          <p>Opaque AI in safety-critical fields can have life-or-death consequences. Three sectors face immediate risk:</p>
+          <p><strong>Medicine:</strong> An AI that misdiagnoses a condition — or fails to flag a disease — without explanation denies doctors the ability to question or override it (Fehr et al., 2024).</p>
+          <p><strong>Autonomous Vehicles:</strong> When a self-driving car fails to detect a pedestrian or makes a flawed ethical tradeoff in an unavoidable collision scenario, the lack of a transparent decision log makes correction impossible (UNESCO, 2026).</p>
+          <p><strong>Criminal Justice:</strong> AI risk assessment tools used in sentencing and bail decisions have been shown to carry hidden biases, potentially extending or denying freedom based on faulty, unauditable algorithms (MacKenzie, 2025).</p>
+          <span class="source-tag">Fehr et al., 2024</span>
+          <span class="source-tag">UNESCO, 2026</span>
+          <span class="source-tag">MacKenzie, 2025</span>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="issue-card" onclick="toggleCard(this)">
+        <div class="issue-header">
+          <div class="issue-title-wrap">
+            <div class="issue-icon" style="background:rgba(245,158,11,0.1);">⚖️</div>
+            <div class="issue-name">Discrimination &amp; Bias</div>
+          </div>
+          <div class="issue-toggle">+</div>
+        </div>
+        <div class="issue-body">
+          <p>AI systems learn from historical data — and history is not neutral. Societal biases in gender, race, and disability that exist in training data are <strong>inherited and amplified</strong> by AI algorithms.</p>
+          <p>A landmark study in dermatology (Adamson & Smith, 2018) found that AI algorithms struggled significantly to identify melanoma in patients with darker skin tones — a direct consequence of training data that underrepresented people of color.</p>
+          <p>A systematic review (Murikah et al., 2024) identified <strong>five sources of algorithmic bias:</strong></p>
+          <p>① Data Deficiencies &nbsp;② Demographic Homogeneity &nbsp;③ Spurious Correlations &nbsp;④ Improper Comparators &nbsp;⑤ Cognitive Biases</p>
+          <p>Without transparency, these biases remain invisible — and therefore unchallenged.</p>
+          <span class="source-tag">Adamson & Smith, 2018</span>
+          <span class="source-tag">Murikah et al., 2024</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bias visual -->
+    <div class="bias-bar-wrap reveal" id="bias-visual">
+      <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:1rem;font-weight:500;">AI Diagnostic Accuracy Gap — Skin Tone Representation in Training Data</p>
+      <div class="bias-bar-label">Lighter Skin Tones — Detection Accuracy</div>
+      <div class="bias-bar-track"><div class="bias-bar-fill" style="width:91%;background:var(--emerald);" data-val="0.91"></div></div>
+      <div class="bias-bar-label">Darker Skin Tones — Detection Accuracy</div>
+      <div class="bias-bar-track"><div class="bias-bar-fill" style="width:63%;background:var(--rose);" data-val="0.63"></div></div>
+      <p class="bias-caption">Illustrative representation based on findings from Adamson & Smith (2018), JAMA Dermatology. Gap is attributable to underrepresentation in training datasets.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ QUIZ 1 ══════════════ -->
+<section id="quiz1">
+  <div class="reveal quiz-wrapper" id="qz1">
+    <div class="quiz-label">🧠 Quick Check — Part 1</div>
+    <h3>Test Your Understanding</h3>
+
+    <div class="q-block" data-correct="1">
+      <p class="q-text">1. What does "black box AI" refer to?</p>
+      <div class="q-options">
+        <button class="q-opt" onclick="selectOpt(this,false,'qz1')">AI that only works at night or in dark environments</button>
+        <button class="q-opt" onclick="selectOpt(this,true,'qz1')">AI that produces decisions without revealing its internal reasoning</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz1')">AI used exclusively in classified government operations</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz1')">A type of neural network with a black graphical interface</button>
+      </div>
+      <div class="q-feedback"></div>
+    </div>
+
+    <div class="q-block" data-correct="1">
+      <p class="q-text">2. Which group is MOST disproportionately affected by AI bias according to Capitol Technology University?</p>
+      <div class="q-options">
+        <button class="q-opt" onclick="selectOpt(this,false,'qz1')">Tech industry workers and software engineers</button>
+        <button class="q-opt" onclick="selectOpt(this,true,'qz1')">People of color, women, and people with disabilities</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz1')">Corporate executives and business owners</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz1')">Government officials and policy makers</button>
+      </div>
+      <div class="q-feedback"></div>
+    </div>
+
+    <div class="q-block" data-correct="2">
+      <p class="q-text">3. The dermatology study by Adamson & Smith (2018) found that AI had trouble with:</p>
+      <div class="q-options">
+        <button class="q-opt" onclick="selectOpt(this,false,'qz1')">Identifying the age of patients from photos</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz1')">Processing high-resolution medical images</button>
+        <button class="q-opt" onclick="selectOpt(this,true,'qz1')">Detecting melanoma in patients with darker skin tones</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz1')">Distinguishing between benign and malignant tumors in general</button>
+      </div>
+      <div class="q-feedback"></div>
+    </div>
+
+    <button class="quiz-submit" id="qz1-submit" onclick="scoreQuiz('qz1')">See My Score</button>
+    <div class="quiz-score" id="qz1-score">
+      <div class="score-num" id="qz1-num">0/3</div>
+      <div class="score-msg" id="qz1-msg"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ AFFECTED ══════════════ -->
+<section id="affected">
+  <div class="reveal">
+    <div class="chapter-label">Chapter 03 — Impact</div>
+    <h2>Who Bears the Cost?</h2>
+    <div class="divider"></div>
+    <p>The consequences of non-transparent AI do not distribute evenly across society. Understanding who is directly and indirectly harmed is central to building ethical solutions.</p>
+
+    <div class="affected-split">
+      <div class="affected-card">
+        <span class="affected-label direct">Directly Affected</span>
+        <h3 style="color:var(--rose);">Marginalized Communities</h3>
+        <p>People of color, women, and individuals with disabilities are most at risk. Pre-existing societal biases embedded in training data are transferred — and often amplified — into algorithmic decision-making.</p>
+        <p>The broader public is also directly affected, as AI now touches healthcare, transportation, employment, and the justice system — institutions that form the fabric of daily life.</p>
+      </div>
+      <div class="affected-card">
+        <span class="affected-label indirect">Indirectly Affected</span>
+        <h3 style="color:var(--amber);">Institutions &amp; Companies</h3>
+        <p>Organizations that deploy opaque AI face serious reputational damage when that AI makes high-profile errors. For-profit entities — law firms, automotive companies, insurers — risk financial losses.</p>
+        <p>The Holistic AI Team (2024) notes that AI bias can lead to discrimination lawsuits, loss of consumer trust, and direct financial setbacks for implementing organizations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ XAI ══════════════ -->
+<section id="xai">
+  <div class="reveal">
+    <div class="chapter-label">Chapter 04 — The Solution Emerging</div>
+    <h2>Explainable AI (XAI)</h2>
+    <div class="divider"></div>
+    <p>In response to the "black box" crisis, the field has pivoted toward <strong>Explainable AI (XAI)</strong> — a paradigm that requires AI systems to provide transparent, human-understandable reasoning for every decision. XAI rests on three foundational requirements:</p>
+
+    <div class="xai-pillars">
+      <div class="pillar">
+        <div class="pillar-icon">🔍</div>
+        <div class="pillar-name">Transparency</div>
+        <p>The AI must provide an explanation of how it arrived at its decision — the direct opposite of "black box" behavior.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">🧩</div>
+        <div class="pillar-name">Interpretability</div>
+        <p>The explanation must be understandable to humans — not just engineers, but the professionals and patients relying on it.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">✅</div>
+        <div class="pillar-name">Explainability</div>
+        <p>The explanation must accurately reflect the AI's actual decision process and be comprehensible to its intended audience.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:2rem;">NIST's Four Principles of XAI</h3>
+    <p>The National Institute of Standards and Technology (NIST) has outlined four core principles that any truly explainable AI system must satisfy:</p>
+
+    <ol class="nist-list">
+      <li><div><strong style="color:var(--text);">Explanation</strong><br/>The AI provides evidence and reasoning behind every decision it makes.</div></li>
+      <li><div><strong style="color:var(--text);">Meaningful</strong><br/>Reasoning is presented in language appropriate to the user — non-technical for everyday users, clinical for doctors, legal for judges.</div></li>
+      <li><div><strong style="color:var(--text);">Accurate</strong><br/>The reasoning shown must genuinely reflect the AI's internal decision process — not a simplified post-hoc rationalization.</div></li>
+      <li><div><strong style="color:var(--text);">Knowledge Limits</strong><br/>The AI acknowledges when its answers may be unreliable or fall outside its reliable operating range.</div></li>
+    </ol>
+
+    <div class="callout" style="margin-top:2rem;">
+      <p>The European Union's General Data Protection Regulation (GDPR) has accelerated the push toward transparent models, incentivizing developers to abandon black-box approaches where personal data is involved.</p>
+      <cite>— Angelov et al., 2021</cite>
+    </div>
+
+    <h3 style="margin-top:2rem;">Current Challenges in XAI Adoption</h3>
+    <p>XAI is being implemented across medicine, criminal justice, and autonomous driving — but widespread adoption faces significant hurdles:</p>
+    <div class="chips">
+      <span class="chip">📏 No standardized metrics</span>
+      <span class="chip">🗃️ Inconsistent data quality</span>
+      <span class="chip">⚙️ Integration into live systems</span>
+      <span class="chip">⚖️ Unresolved liability questions</span>
+      <span class="chip">📜 Gaps in legislation</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SOLUTION ══════════════ -->
+<section id="solution">
+  <div class="reveal">
+    <div class="chapter-label">Chapter 05 — Our Proposal</div>
+    <h2>A Human-in-the-Loop Framework</h2>
+    <div class="divider"></div>
+    <p>Our team proposes a solution that pairs XAI with structured human oversight. Rather than trusting AI outputs unchecked — or overriding AI entirely — we propose a <strong>qualified professional review layer</strong> that uses the transparency XAI provides to audit AI decisions before they take effect.</p>
+
+    <div class="solution-box">
+      <h3>The Proposed Solution</h3>
+      <p>A domain-qualified professional (e.g. a physician, legal expert, or engineer) reviews each consequential AI decision. Using XAI's transparent reasoning output, they verify that:</p>
+      <p>① The decision is not based on biased or low-quality data<br/>② The reasoning aligns with current professional standards and regulations<br/>③ The decision would withstand ethical and legal scrutiny</p>
+    </div>
+
+    <h3 style="margin-top:2rem;">Ethical Frameworks That Guide This Proposal</h3>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <h4>Human Rights &amp; Equality</h4>
+          <p>Minimizing AI-driven discrimination, especially in high-impact decisions like hiring and medical diagnosis that disproportionately affect already-marginalized communities.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <h4>Utilitarianism</h4>
+          <p>The solution is designed to produce the greatest positive outcome for the greatest number of users — while honestly acknowledging the burden placed on human reviewers.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <h4>Justice</h4>
+          <p>Ensuring decisions are as fair as possible — not skewed by the accidents of what data happened to be available when the model was trained.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <h4>Information Literacy</h4>
+          <p>Beyond just making AI explainable, having professionals verify decisions ensures outputs are grounded in current, accurate domain knowledge — not outdated training data.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:2rem;">Projected Impacts</h3>
+    <div class="impact-row">
+      <span class="impact-tag pos">✓ Reduced discriminatory outcomes</span>
+      <span class="impact-tag pos">✓ Clearer lines of accountability</span>
+      <span class="impact-tag pos">✓ Increased public trust</span>
+      <span class="impact-tag pos">✓ Regulatory compliance</span>
+      <span class="impact-tag neu">~ Added review time &amp; cost</span>
+      <span class="impact-tag neg">✗ Risk of moral scapegoating</span>
+    </div>
+
+    <div class="callout" style="margin-top:1.5rem;border-left-color:var(--rose);">
+      <p><strong style="color:var(--rose);">The Scapegoat Risk:</strong> Research by Robert Ranisch (2024) warns that when humans are inserted into AI oversight loops, they are more likely to be blamed for AI malfunctions that are outside their control — creating a new form of ethical hazard even as we try to solve another.</p>
+      <cite>— Ranisch, 2024 (The American Journal of Bioethics)</cite>
+    </div>
+
+    <h3 style="margin-top:2rem;">Policy Recommendations</h3>
+    <p>Individual organizations should adopt frameworks like NIST's AI Risk Management Framework or ISO/IEC 42001, and implement techniques such as <strong>LIME</strong> and <strong>SHAP</strong> to promote algorithmic transparency. Governments must move beyond referencing international standards and draft explicit, enforceable explainability requirements — with agreed-upon definitions — into domestic law. (Nannini et al., 2023)</p>
+  </div>
+</section>
+
+<!-- ══════════════ QUIZ 2 ══════════════ -->
+<section id="quiz2">
+  <div class="reveal quiz-wrapper" id="qz2">
+    <div class="quiz-label">🧠 Quick Check — Part 2</div>
+    <h3>XAI &amp; Solutions</h3>
+
+    <div class="q-block">
+      <p class="q-text">1. What does XAI stand for?</p>
+      <div class="q-options">
+        <button class="q-opt" onclick="selectOpt(this,false,'qz2')">Extended Artificial Intelligence</button>
+        <button class="q-opt" onclick="selectOpt(this,true,'qz2')">Explainable Artificial Intelligence</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz2')">Experimental AI Architecture</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz2')">External AI Integration</button>
+      </div>
+      <div class="q-feedback"></div>
+    </div>
+
+    <div class="q-block">
+      <p class="q-text">2. Which NIST principle requires the AI to acknowledge when its answers may not be reliable?</p>
+      <div class="q-options">
+        <button class="q-opt" onclick="selectOpt(this,false,'qz2')">Accuracy</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz2')">Meaningful</button>
+        <button class="q-opt" onclick="selectOpt(this,true,'qz2')">Knowledge Limits</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz2')">Explanation</button>
+      </div>
+      <div class="q-feedback"></div>
+    </div>
+
+    <div class="q-block">
+      <p class="q-text">3. What negative impact does Robert Ranisch warn about when including humans in AI oversight?</p>
+      <div class="q-options">
+        <button class="q-opt" onclick="selectOpt(this,false,'qz2')">It makes AI systems significantly slower</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz2')">It increases the cost of AI systems dramatically</button>
+        <button class="q-opt" onclick="selectOpt(this,true,'qz2')">Humans may be unfairly blamed (scapegoated) for AI malfunctions outside their control</button>
+        <button class="q-opt" onclick="selectOpt(this,false,'qz2')">It introduces more data privacy violations</button>
+      </div>
+      <div class="q-feedback"></div>
+    </div>
+
+    <button class="quiz-submit" id="qz2-submit" onclick="scoreQuiz('qz2')">See My Score</button>
+    <div class="quiz-score" id="qz2-score">
+      <div class="score-num" id="qz2-num">0/3</div>
+      <div class="score-msg" id="qz2-msg"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ REFERENCES ══════════════ -->
+<section id="refs">
+  <div class="reveal">
+    <div class="chapter-label">References</div>
+    <h2>Works Cited</h2>
+    <div class="divider"></div>
+    <p style="font-size:0.9rem;">This site is based on academic research, peer-reviewed studies, and institutional publications. Full citations are available below.</p>
+    <button class="refs-toggle" onclick="toggleRefs()">Show All References ↓</button>
+    <div class="refs-list" id="refs-list">
+      <ol>
+        <li>Pazzanese, C. (2024). Ethical concerns mount as AI takes bigger decision-making role. <em>Harvard Gazette.</em></li>
+        <li>Carnegie Council for Ethics in International Affairs. (2026). AI Accountability. <a href="https://www.carnegiecouncil.org/explore-engage/key-terms/ai-accountability" target="_blank">carnegiecouncil.org</a></li>
+        <li>Fehr, J. et al. (2024). A trustworthy AI reality-check: the lack of transparency of artificial intelligence products in healthcare. <em>Frontiers in Digital Health.</em></li>
+        <li>UNESCO. (2026). Artificial Intelligence: Examples of Ethical Dilemmas. <a href="https://www.unesco.org/en/artificial-intelligence/recommendation-ethics/cases" target="_blank">unesco.org</a></li>
+        <li>MacKenzie, B. (2025). AI in the courts: Ethical challenges. <em>Justice Speakers Institute.</em></li>
+        <li>Adamson, A.S. & Smith, A. (2018). Machine Learning and Health Care Disparities in Dermatology. <em>JAMA Dermatology, 154(11).</em></li>
+        <li>Murikah, W. et al. (2024). Bias and ethics of AI systems applied in auditing. <em>Scientific African, 25.</em></li>
+        <li>Capitol Technology University. (2023). The Ethical Considerations of Artificial Intelligence.</li>
+        <li>Holistic AI Team. (2024). What Is AI Bias? Understanding Its Impact, Risks, and Mitigation Strategies.</li>
+        <li>Angelov, P.P. et al. (2021). Explainable artificial intelligence: An analytical review. <em>WIREs Data Mining and Knowledge Discovery, 11(5).</em></li>
+        <li>Ahmed, F. et al. (2026). Explainable AI (XAI) in Medical Imaging: A systematic review. <em>BMC Medical Imaging, 26(1).</em></li>
+        <li>Markkula Center for Applied Ethics. (2021). A Framework for Ethical Decision Making. <a href="https://www.scu.edu/ethics/ethics-resources/a-framework-for-ethical-decision-making/" target="_blank">scu.edu</a></li>
+        <li>Ranisch, R. (2024). Scapegoat-in-the-Loop? Human Control over Medical AI and the (Mis)Attribution of Responsibility. <em>The American Journal of Bioethics, 24(9).</em></li>
+        <li>Alation. (2025). What Is Explainable AI Governance?</li>
+        <li>Nannini, L. et al. (2023). Explainability in AI Policies: A Critical Review. <em>ArXiv.</em></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Created for an Ethics in Technology course project.</p>
+  <p style="margin-top:0.5rem;opacity:0.5;">AI transparency is not a technical nicety — it is a civil rights issue.</p>
+</footer>
+
+<script>
+  // ── Progress Bar ──
+  const bar = document.getElementById('progress-bar');
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    bar.style.width = pct + '%';
+  });
+
+  // ── Scroll Reveal ──
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        // Trigger bias bars
+        e.target.querySelectorAll('.bias-bar-fill').forEach(b => b.classList.add('animated'));
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Also observe bias visual separately
+  const biasObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.bias-bar-fill').forEach(b => b.classList.add('animated'));
+      }
+    });
+  }, { threshold: 0.3 });
+  const bv = document.getElementById('bias-visual');
+  if (bv) biasObs.observe(bv);
+
+  // ── Card Toggle ──
+  function toggleCard(card) {
+    const isOpen = card.classList.contains('open');
+    document.querySelectorAll('.issue-card').forEach(c => c.classList.remove('open'));
+    if (!isOpen) card.classList.add('open');
+  }
+
+  // ── Quiz Logic ──
+  const quizState = {};
+
+  function selectOpt(btn, correct, quizId) {
+    const block = btn.closest('.q-block');
+    if (block.dataset.answered) return;
+    block.dataset.answered = '1';
+    block.dataset.wasCorrect = correct ? '1' : '0';
+
+    const opts = block.querySelectorAll('.q-opt');
+    opts.forEach(o => o.disabled = true);
+
+    const feedback = block.querySelector('.q-feedback');
+    if (correct) {
+      btn.classList.add('correct');
+      feedback.textContent = '✓ Correct!';
+      feedback.className = 'q-feedback show good';
+    } else {
+      btn.classList.add('wrong');
+      feedback.textContent = '✗ Not quite — review the section above.';
+      feedback.className = 'q-feedback show bad';
+      // Highlight correct
+      opts.forEach(o => {
+        if (o.onclick.toString().includes('true')) o.classList.add('correct');
+      });
+    }
+
+    checkAllAnswered(quizId);
+  }
+
+  function checkAllAnswered(quizId) {
+    const wrapper = document.getElementById(quizId);
+    const blocks = wrapper.querySelectorAll('.q-block');
+    const allDone = [...blocks].every(b => b.dataset.answered);
+    if (allDone) {
+      document.getElementById(quizId + '-submit').classList.add('visible');
+    }
+  }
+
+  function scoreQuiz(quizId) {
+    const wrapper = document.getElementById(quizId);
+    const blocks = wrapper.querySelectorAll('.q-block');
+    let score = 0;
+    blocks.forEach(b => { if (b.dataset.wasCorrect === '1') score++; });
+    const total = blocks.length;
+
+    document.getElementById(quizId + '-submit').style.display = 'none';
+    const scoreEl = document.getElementById(quizId + '-score');
+    scoreEl.classList.add('show');
+    document.getElementById(quizId + '-num').textContent = score + '/' + total;
+
+    const msgs = {
+      0: "Keep exploring — re-read the sections above!",
+      1: "Good start! Review the sections to solidify your knowledge.",
+      2: "Well done! You've got a solid grasp of the material.",
+      3: "Perfect score! You're fully up to speed on this topic. 🎉"
+    };
+    document.getElementById(quizId + '-msg').textContent = msgs[score] || '';
+  }
+
+  // ── References Toggle ──
+  function toggleRefs() {
+    const list = document.getElementById('refs-list');
+    const btn = document.querySelector('.refs-toggle');
+    list.classList.toggle('open');
+    btn.textContent = list.classList.contains('open') ? 'Hide References ↑' : 'Show All References ↓';
+  }
+</script>
+</body>
+</html>
